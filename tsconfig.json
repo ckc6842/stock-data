@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "esnext",
+      "noImplicitAny": true,
+      "removeComments": true,
+      "preserveConstEnums": true,
+      "sourceMap": true,
+      "lib": ["es2015"]
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+}
