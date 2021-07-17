@@ -1,5 +1,7 @@
 import axios from 'axios'
+import { model, Schema } from 'mongoose'
 import { Node, parse } from 'node-html-parser'
+import { getConnection } from './db'
 
 interface SNP500Stock {
   symbol: string
@@ -8,6 +10,14 @@ interface SNP500Stock {
   industry: string
   dateAdded: Date
 }
+
+const schema = new Schema<SNP500Stock>({
+  symbol: { type: String, required: true },
+  security: { type: String, required: true },
+  sector: { type: String, required: true },
+  industry: { type: String, required: true },
+  dateAdded: { type: Date },
+})
 
 export const getWikiData = async () => {
   const url: string = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
@@ -23,7 +33,7 @@ const COLUMNS = {
   ADDED: 13,
 }
 
-export const parseTable = async (rawHTML: string) => {
+export const parseHTML = async (rawHTML: string) => {
   const document = parse(rawHTML)
   const tableRows = document.querySelectorAll('#constituents tr')
   const body = tableRows.slice(1)
@@ -51,7 +61,7 @@ export const parseTable = async (rawHTML: string) => {
           rowData.industry = text
           break
         case COLUMNS.ADDED:
-          rowData.dateAdded = new Date(text)
+          rowData.dateAdded = text ? new Date(text) : null
           break
         default:
           break
@@ -62,10 +72,19 @@ export const parseTable = async (rawHTML: string) => {
   return result
 }
 
+const saveData = async (stocks: Array<SNP500Stock>) => {
+  const db = await getConnection()
+  const SNP500StockModel = model<SNP500Stock>('snp500-stocks', schema)
+  const docs = stocks.map(stock => {
+    return new SNP500StockModel(stock)
+  })
+  SNP500StockModel.insertMany(docs)
+}
 
 const execute = async () => {
   const rawHTML: string = await getWikiData()
-  const parsedTable: any = await parseTable(rawHTML)
+  const stocks: Array<SNP500Stock> = await parseHTML(rawHTML)
+  saveData(stocks)
 }
 
 execute()

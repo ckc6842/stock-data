@@ -1,4 +1,4 @@
-import { parseTable } from './snp500'
+import { parseHTML } from './snp500'
 import rawHtml from './__mock__/snp500.html'
 
 describe('S&P 500 데이터 크롤링', () => {
@@ -10,13 +10,14 @@ describe('S&P 500 데이터 크롤링', () => {
       industry: 'Industrial Conglomerates',
       dateAdded: new Date('1976-08-09')
     }
-    const actualData = await parseTable(rawHtml)
+    const actualData = await parseHTML(rawHtml)
     expect(actualData[0]).toEqual(expectData)
   })
 
   test('데이터를 505개 정상적으로 수집한다.', async () => {
     // NOTE: 사실 S&P 505였다.
-    const actualData = await parseTable(rawHtml)
+    const actualData = await parseHTML(rawHtml)
+    console.log(actualData[0])
     expect(actualData.length).toBeGreaterThanOrEqual(505)
   })
 })
