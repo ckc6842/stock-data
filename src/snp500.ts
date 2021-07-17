@@ -1,5 +1,13 @@
 import axios from 'axios'
-import { parse } from 'node-html-parser'
+import { Node, parse } from 'node-html-parser'
+
+interface SNP500Stock {
+  symbol: string
+  security: string
+  sector: string
+  industry: string
+  dateAdded: Date
+}
 
 export const getWikiData = async () => {
   const url: string = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
@@ -19,36 +27,37 @@ export const parseTable = async (rawHTML: string) => {
   const document = parse(rawHTML)
   const tableRows = document.querySelectorAll('#constituents tr')
   const body = tableRows.slice(1)
-  const result = {
-    symbol: '',
-    security: '',
-    sector: '',
-    industry: '',
-    dateAdded: ''
-  }
-  body.forEach((row, idx) => {
-    if (idx !== 0) return
+  const result = body.map((row: Node, idx: number) => {
+    let rowData: SNP500Stock = {
+      symbol: '',
+      security: '',
+      sector: '',
+      industry: '',
+      dateAdded: new Date(),
+    }
     row.childNodes.forEach((cell, column) => {
+      const text: string = cell.text.replace(/(\r\n|\n|\r)/gm, '')
       switch (column) {
         case COLUMNS.SYMBOL:
-          result.symbol = cell.text.replace(/(\r\n|\n|\r)/gm, '')
+          rowData.symbol = text
           break
         case COLUMNS.SECURITY:
-          result.security = cell.text.replace(/(\r\n|\n|\r)/gm, '')
+          rowData.security = text
           break
         case COLUMNS.SECTOR:
-          result.sector = cell.text.replace(/(\r\n|\n|\r)/gm, '')
+          rowData.sector = text
           break
         case COLUMNS.INDUSTRY:
-          result.industry = cell.text.replace(/(\r\n|\n|\r)/gm, '')
+          rowData.industry = text
           break
         case COLUMNS.ADDED:
-          result.dateAdded = cell.text.replace(/(\r\n|\n|\r)/gm, '')
+          rowData.dateAdded = new Date(text)
           break
         default:
           break
       }
-    });
+    })
+    return rowData
   })
   return result
 }
