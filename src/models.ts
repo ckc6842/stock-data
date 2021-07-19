@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose"
-import { SNP500Stock } from "./interfaces"
+import { SNP500StockDocument } from "./interfaces"
 
-const SNP500StockSchema = new Schema<SNP500Stock>({
+export const SNP500StockSchema: Schema = new Schema({
   symbol: { type: String, required: true },
   security: { type: String, required: true },
   sector: { type: String, required: true },
@@ -9,4 +9,4 @@ const SNP500StockSchema = new Schema<SNP500Stock>({
   dateAdded: { type: Date },
 })
 
-export const SNP500StockModel = model<SNP500Stock>('snp500-stocks', SNP500StockSchema)
+export const SNP500StockModel = model<SNP500StockDocument>('snp500-stocks', SNP500StockSchema)
