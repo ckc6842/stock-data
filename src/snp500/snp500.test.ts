@@ -17,7 +17,6 @@ describe('S&P 500 데이터 크롤링', () => {
   test('데이터를 505개 정상적으로 수집한다.', async () => {
     // NOTE: 사실 S&P 505였다.
     const actualData = await parseHTML(rawHtml)
-    console.log(actualData[0])
     expect(actualData.length).toBeGreaterThanOrEqual(505)
   })
 })

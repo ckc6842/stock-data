@@ -1,23 +1,8 @@
 import axios from 'axios'
-import { model, Schema } from 'mongoose'
 import { Node, parse } from 'node-html-parser'
-import { getConnection } from './db'
-
-interface SNP500Stock {
-  symbol: string
-  security: string
-  sector: string
-  industry: string
-  dateAdded: Date
-}
-
-const schema = new Schema<SNP500Stock>({
-  symbol: { type: String, required: true },
-  security: { type: String, required: true },
-  sector: { type: String, required: true },
-  industry: { type: String, required: true },
-  dateAdded: { type: Date },
-})
+import { getConnection } from '../db'
+import { SNP500Stock } from '../interfaces'
+import { SNP500StockModel } from '../models'
 
 export const getWikiData = async () => {
   const url: string = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
@@ -74,7 +59,6 @@ export const parseHTML = async (rawHTML: string) => {
 
 const saveData = async (stocks: Array<SNP500Stock>) => {
   const db = await getConnection()
-  const SNP500StockModel = model<SNP500Stock>('snp500-stocks', schema)
   const docs = stocks.map(stock => {
     return new SNP500StockModel(stock)
   })
