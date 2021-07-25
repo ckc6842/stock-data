@@ -1,15 +1,10 @@
 import axios, { AxiosPromise } from 'axios'
 import { config } from 'dotenv'
-import { getConnection } from '../db'
+import { getConnection } from '../db/connection'
 import { SNP500StockDocument } from '../interfaces'
 import { SNP500StockModel } from '../models'
 config()
 
-export const findStocks = async (skip: number = 0, limit: number = 50): Promise<SNP500StockDocument[]> => {
-  const db = await getConnection()
-  const stocks = SNP500StockModel.find().sort({'_id': 1}).skip(skip).limit(limit).exec()
-  return stocks
-}
 
 export const makeRequests = (stocks: Array<SNP500StockDocument>): Array<AxiosPromise> => {
   const start = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
