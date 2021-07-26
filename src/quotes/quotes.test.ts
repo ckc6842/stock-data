@@ -1,9 +1,6 @@
-import { makeRequests, requestQuotes } from './quotes'
+import { makeRequests, requestEachPeriod, requestQuotes } from './quotes'
 import axios, { AxiosStatic } from 'axios'
-import { config } from 'dotenv'
 import { SNP500StockModel } from '../models'
-
-config()
 
 interface AxiosMock extends AxiosStatic {
   mockResolvedValue: Function
@@ -33,5 +30,28 @@ describe('일봉 API 요청 및 저장', () => {
       `${apiUrlBase}function=TIME_SERIES_DAILY_ADJUSTED&symbol=AAPL&apikey=${apiKey}`,
     )
     expect(axiosMock.get).toHaveBeenCalledTimes(2)
+  })
+
+  test('매 분 주어진 개수만큼의 요청을 수행한다.', async () => {
+    const requests = await makeRequests(
+      [
+        new SNP500StockModel({symbol: 'A'}),
+        new SNP500StockModel({symbol: 'B'}),
+        new SNP500StockModel({symbol: 'C'}),
+        new SNP500StockModel({symbol: 'D'}),
+        new SNP500StockModel({symbol: 'E'}),
+        new SNP500StockModel({symbol: 'F'}),
+        new SNP500StockModel({symbol: 'G'}),
+        new SNP500StockModel({symbol: 'H'}),
+      ],
+      requestQuotes
+    )
+
+    const period = 300
+    const start = new Date().getTime()
+    const responses = await requestEachPeriod(requests, 2, period)
+    const end = new Date().getTime()
+    expect(axiosMock.get).toHaveBeenCalledTimes(8)
+    expect(end - start).toBeGreaterThanOrEqual(period * 3)
   })
 })

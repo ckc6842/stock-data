@@ -1,4 +1,4 @@
-import axios, { AxiosPromise } from 'axios'
+import axios, { AxiosPromise, AxiosResponse } from 'axios'
 import { config } from 'dotenv'
 import { SNP500StockDocument } from '../interfaces'
 config()
@@ -28,4 +28,27 @@ export const requestQuotes = (symbol: string): AxiosPromise => {
     function: 'TIME_SERIES_DAILY_ADJUSTED',
     symbol
   }))
+}
+
+export const requestEachPeriod = (requests: AxiosPromise[], count: number, period: number): Promise<any> => {
+  return new Promise(async (resolve) => {
+    let result: AxiosResponse[] = []
+    const requestGroups = requests
+      .reduce((prev: AxiosPromise[][], request: AxiosPromise): AxiosPromise[][] => {
+        if (prev.length === 0 || prev[prev.length - 1].length === count) {
+          return [...prev, [request]]
+        } else {
+          return [...prev.slice(0, prev.length - 1), [...prev[prev.length - 1], request]]
+        }
+      }, [] as AxiosPromise[][])
+    requestGroups.forEach((requestGroup: AxiosPromise[], index: number) => {
+      setTimeout(async () => {
+        const responses = await Promise.all(requestGroup)
+        result = [...result, ...responses]
+        if (result.length === requests.length) {
+          resolve(result)
+        }
+      }, period * index)
+    })
+  })
 }
