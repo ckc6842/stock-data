@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Node, parse } from 'node-html-parser'
-import { getConnection } from '../db'
+import { getConnection } from '../db/connection'
 import { SNP500Stock } from '../interfaces'
 import { SNP500StockModel } from '../models'
 
