@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --watchAll"
+    "test": "jest --watch -o"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.1",
+    "dotenv": "^10.0.0",
     "jsdom": "^16.6.0",
     "mongoose": "^5.13.3",
     "node-html-parser": "^4.1.0"
