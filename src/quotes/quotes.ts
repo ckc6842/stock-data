@@ -2,7 +2,7 @@ import axios, { AxiosPromise, AxiosResponse } from 'axios'
 import { config } from 'dotenv'
 import { SNP500StockModel } from '../models'
 import { paginateStocks } from '../db/stocks'
-import { SNP500StockDocument } from '../interfaces'
+import { Quote, SNP500StockDocument } from '../interfaces'
 config()
 
 const apiUrlBase = 'https://www.alphavantage.co/query?'
@@ -43,11 +43,12 @@ const requestCompanyOverview = (symbol: string): AxiosPromise => {
 export const requestEachPeriod = (
   stocks: SNP500StockDocument[],
   requestMethod: Function,
+  saveMethod: Function,
   count: number,
   period: number
 ): Promise<any> => {
   return new Promise(async (resolve) => {
-    let result: AxiosResponse[] = []
+    let resultCount = 0
     const stockGroups = stocks
       .reduce((prev: SNP500StockDocument[][], stock: SNP500StockDocument): SNP500StockDocument[][] => {
         if (prev.length === 0 || prev[prev.length - 1].length === count) {
@@ -60,9 +61,10 @@ export const requestEachPeriod = (
       setTimeout(async () => {
         const requests = makeRequests(stockGroup, requestMethod)
         const responses = await Promise.all(requests)
-        result = [...result, ...responses]
-        if (result.length === stocks.length) {
-          resolve(result)
+        await saveMethod(responses)
+        resultCount += responses.length
+        if (resultCount === stocks.length) {
+          resolve(true)
         }
       }, period * index)
     })
@@ -97,14 +99,58 @@ const parseAndSaveOverview = async (responses: AxiosResponse[]) => {
   const result = await SNP500StockModel.bulkWrite(writes)
 }
 
+const parseAndSaveQuote = async (responses: AxiosResponse[]) => {
+  const writes = responses.map((response: AxiosResponse) => {
+    // TODO: 이 API는 CSV 기반으로 parsing 하는 편이 좋을 듯
+    const {
+      ['Meta Data']: metaData,
+      ['Time Series (Daily)']: timeSeries,
+    } = response.data
+    const {
+      ['2. Symbol']: symbol,
+      ['3. Last Refreshed']: lastRefreshed
+    } = metaData
+
+    const {
+      ['1. open']: open,
+      ['2. high']: high,
+      ['3. low']: low,
+      ['4. close']: close,
+      ['6. volume']: volume
+    } = timeSeries[lastRefreshed]
+
+    const lastQuote: Quote = {
+      open,
+      high,
+      close,
+      low,
+      volume,
+      date: new Date(lastRefreshed)
+    }
+
+    return {
+      updateOne: {
+        filter: { symbol },
+        update: {
+          lastQuote
+        }
+      }
+    }
+  })
+  const result = await SNP500StockModel.bulkWrite(writes)
+}
+
 const execute = async () => {
   const page = 0
   const itemPerPage = 5
   const stocks = await paginateStocks(page, itemPerPage)
   const SECOND = 1000
   const MINUTE = 60 * SECOND
-  const responses = await requestEachPeriod(stocks, requestCompanyOverview, 5, 2 * MINUTE)
-  await parseAndSaveOverview(responses)
+  const responses = await requestEachPeriod(
+    stocks,
+    requestQuotes,
+    parseAndSaveQuote,
+  5, 2 * MINUTE)
   process.exit(0)
 }
 
