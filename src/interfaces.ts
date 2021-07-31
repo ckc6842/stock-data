@@ -1,5 +1,14 @@
 import { Document, ObjectId } from "mongoose";
 
+export interface Quote {
+  date: Date
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
 export interface SNP500Stock {
   symbol: string
   security: string
@@ -11,6 +20,7 @@ export interface SNP500Stock {
   yearlyHighest?: number
   yearlyLowest?: number
   sharesOutstanding?: number
+  lastQuote?: Quote
 }
 
 export interface SNP500StockDocument extends SNP500Stock, Document {
